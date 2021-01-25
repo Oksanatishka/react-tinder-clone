@@ -1,0 +1,194 @@
+MERN Tinder clone 
+
+> npx create-react-app tinder-clone
+> cd tinder-clone
+> npm start
+
+Backend:
+- MongoDB - db
+-> nodejs - which is a backend javascript framework
+- express.js - which is his server side
+- mongoose - which we will use to connect MongoDB and it will make our connection easy and painless
+
+- heroku - to host our backend
+- firebase - deploying frontend to it.
+
+Go to Firebase Console: create project
+
+
+Remove unnecessary default styles and functionality
+    - remove /src/logo.svg, /src/App.test.js, /src/setupTests.js files
+    - in App.js:
+        - remove <header> tag & its import
+        - rename className="App" to "app" & add <h1>Let's build Airbnb!</h1> inside div
+    - delete styles in App.css
+    - in index.css add *{margin:0}
+    
+Components:
+    Header          (create Header.js -> rsc -> add className, Header.css, import it in App.js)
+    TinderCards 
+        > npm i react-tinder-card
+        store people in state
+            import React, {useState} from 'react';
+            const [people, setPeople] = useState
+
+    SwipeButtons
+
+Material UI
+    > npm install @material-ui/core
+    > npm install @material-ui/icons
+    
+    To fix Babel issue: Module not found: Can't resolve '.../node_modules/babel-loader/lib/index.js' :
+    > npm install -D babel-loader @babel/core @babel/preset-env
+
+To pull people from the backend (instead of state) => create a node.js app, express server which wil connect to mongodb, grab all data that is currently hardcoded and you can see it on your screen, putting that data into a mongodb database, pull it back
+    create new folder 'tinder-backend'
+    > cd tinder-backend/
+    > git init
+    > npm init   // for 'entry point' type 'server.js'
+    in package.js add "type":"module", under scripts "start":"node server.js"
+    create server.js - all logic here
+    > npm i express mongoose
+    Go to mongodb.com -> sign in / start free -> new project -> create cluster
+    In server.js add code:
+        import express from 'express'
+        import mongoose from 'mongoose'
+
+        // App Config
+        const app = express();
+        const port = process.env.PORT || 8001;
+
+        // Middlewares
+
+        // DB Config
+
+        // API Endpoints
+        app.get('/', (req, res) => res.status(200).send('HELLO OKSANA'));
+
+        // Listener
+        app.listen(port, ()=> console.log(`listening on localhost ${port}`))
+    Now it should work. 
+    > sudo npm i -g nodemon     // if it's not installed globally for all projects
+    > nodemon server.js
+
+
+    SyntaxError: Unexpected identifier -> чаще всего из-за старой версии node.
+        -> использовать require вместо import, и module.exports вместо 'export default'
+        -> установить node через nvm
+
+    Open http://localhost:8001/ - now api works
+
+To connect with a database:
+    Go to mongodb.com -> 
+        'Database Access' tab -> 'Add New Database User' -> Password Authentication: user: admin, pw: generate it -> Add User
+        'Network Access' tab -> 'Add IP Address' -> Allow access from anywhere -> Confirm
+        'Clusters' tab -> 'Connect' button -> Connect your application -> see url which we'll be using to connect to our db
+            mongodb+srv://admin:<password>@cluster0.lc0h2.mongodb.net/<dbname>?retryWrites=true&w=majority
+    Go to server.js -> add
+        const connection_url = "mongodb+srv://admin:drip3kect_noss1FROS@cluster0.lc0h2.mongodb.net/TinderClone?retryWrites=true&w=majority"
+        mongoose.connect(connection_url, {
+            useNewUrlParser:true,
+            useCreateIndex: true,
+            useUnifiedTopology: true,
+        })
+    To create database schema:
+        - create model dbCards.js
+            const mongoose = require('mongoose');
+            const cardSchema = mongoose.Schema({
+                name:String,
+                imgUrl: String
+            })
+            export default mongoose.model('cards', cardSchema)
+        With that database structure built up.
+    Go to server.js -> add
+        import Cards from './dbCards.js';
+        app.post('/tinder/card', (req,res) => {
+            const dbCard = req.body;
+            // fn that create a new Document
+            Cards.create(dbCard, (err, data) => {
+                if(err){
+                    res.status(500).send(err)
+                } else {
+                    res.status(201).send(data)
+                }
+            })
+        })
+        // another endpoint that download/retrieve data from db
+        app.get('/tinder/card', (req,res) => {
+            Cards.find(dbCard, (err, data) => {
+                if(err){
+                    res.status(500).send(err)
+                } else {
+                    res.status(200).send(data)
+                }
+            })
+        })
+    Open Postman to check stuff -> ender 'http://localhost:8001/', then add endpoint 'http://localhost:8001/tinder/cards' -> you'll see empty array []
+        Method: Post, 'Body' tab, raw, JSON.
+        Check 'REST Client' extension in VS Code editor.
+        
+    To add middleware:
+        app.use(express.json()) -> add hardcoded code from frontend.
+        > npm i cors    // cors is adding headers to every request, it's basically a security prerequisite especially when you have things deployed online
+        import Cors from 'cors';
+        app.use(Cors());    
+        > nodemon server.js     // start our app again
+
+    Open Postman, add json code from project, add quotes "" around object keys, wrap object in array -> click on Send button, it will push it to db.
+        [{
+            "name": "Elon Musk",
+            "imgUrl":"https://thumbor.forbes.com/thumbor/fit-in/416x416/filters%3Aformat%28jpg%29/https%3A%2F%2Fspecials-images.forbesimg.com%2Fimageserve%2F5f47d4de7637290765bce495%2F0x0.jpg%3Fbackground%3D000000%26cropX1%3D1398%26cropX2%3D3908%26cropY1%3D594%26cropY2%3D3102"
+        },
+        {
+            "name": "Jeff Bezos",
+            "imgUrl":"https://pbs.twimg.com/profile_images/669103856106668033/UF3cgUk4_400x400.jpg",
+        }]
+
+    Otherwise add data through mongodb instead of through Postman:
+        MongoDB -> Clusters -> Collection:
+            db name: tinderdb
+            collection name: cards
+
+    Let's get back to our frontend:
+        > npm i axios
+        // create axios instance. Axios is a package that will make http requests super simple.
+        /src/axios.js
+            import axios from 'axios'
+            const instance = axios.create({
+                baseURL: 'http://localhost:8001'
+            })
+            export default instance;
+        /src/TinderCards.js
+            remove json:
+                const [people, setPeople] = useState([]);
+            useEffect:
+                import axios from './axios'
+                useEffect(() => {
+                    async function fetchData() {
+                        const req = await axios.get('/tinder/cards')
+                        setPeople(req.data)
+                    }
+                    fetchData();
+                }, [])
+            
+To deploy backend on Heroku:
+    Sign in -> Create new app -> App name: tinder-backend
+    > heroku git:remote -a tinder-backend   // to link your project to heroku project
+    > git add .
+    > git status
+    create .gitignore   -> type node_modules
+    > git push heroku master
+    > heroku logs --tail
+    in heroku find link (Domains side tab).
+    copy that link -> go to /src/axios.js -> change baseUrl to a new one (remove slash at the end of link).
+
+To deploy frontend on Firebase: 
+    Firebase SDK snippet -> change from 'Automatic' to 'Config' -> create /src/firebase.js -> paste provided code
+    > npm i -g firebase-tools   // did once
+    > firebase login
+    > firebase init // Hosting -> Use an existing project -> tinder-clone -> build -> y
+    > npm run build 
+    > firebase deploy
+
+    
+https://tinder-backend-o.herokuapp.com/
