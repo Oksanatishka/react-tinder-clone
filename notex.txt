@@ -191,4 +191,5 @@ To deploy frontend on Firebase:
     > firebase deploy
 
     
-https://tinder-backend-o.herokuapp.com/
+Backend link: https://tinder-backend-o.herokuapp.com/
+Frontend link: https://tinder-clone-project-5e6ae.web.app/
