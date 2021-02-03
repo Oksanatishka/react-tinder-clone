@@ -39,7 +39,8 @@ Material UI
     > npm install @material-ui/icons
     
     To fix Babel issue: Module not found: Can't resolve '.../node_modules/babel-loader/lib/index.js' :
-    > npm install -D babel-loader @babel/core @babel/preset-env
+        > npm install -D babel-loader @babel/core @babel/preset-env
+        do 4 steps from terminal to remove 'babel-loader'
 
 To pull people from the backend (instead of state) => create a node.js app, express server which wil connect to mongodb, grab all data that is currently hardcoded and you can see it on your screen, putting that data into a mongodb database, pull it back
     create new folder 'tinder-backend'
